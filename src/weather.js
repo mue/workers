@@ -85,7 +85,22 @@ async function handleRequest(request) {
         return response;
     }
 
-    const data = await (await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=TOKEN&lang=${language}`)).json();
+    // format
+    let formatText;
+    const format = searchParams.get('format');
+    switch (format) {
+        case 'celsius':
+            formatText = '&units=metric';
+            break;
+        case 'fahrenheit':
+            formatText = '&units=imperial';
+            break;
+        default:
+            formatText = '';
+            break;
+    }
+
+    const data = await (await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=TOKEN&lang=${language}&units=${formatText}`)).json();
     if (data.cod === '404') {
         let response = new Response(JSON.stringify(data), {
           status: 200,
