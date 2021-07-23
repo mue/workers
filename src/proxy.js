@@ -177,21 +177,7 @@ const handleRequest = async (request) => {
             });
         }
 
-        // format
-        let formatText;
-        switch (searchParams.get('format')) {
-            case 'celsius':
-                formatText = '&units=metric';
-                break;
-            case 'fahrenheit':
-                formatText = '&units=imperial';
-                break;
-            default:
-                formatText = '';
-                break;
-        }
-
-        const data = await (await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${config.openweathermap.app_id}&lang=${language}${formatText}`)).json();
+        const data = await (await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${config.openweathermap.app_id}&lang=${language}`)).json();
         if (data.cod === '404') {
             return new Response(JSON.stringify(data), {
                 status: 404,
