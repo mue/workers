@@ -23,10 +23,58 @@ const handleRequest = async (request) => {
             app_id: '',
             // see https://openweathermap.org/current#multi, this list should include Mue languages that are included in the list
             supported_languages: ['en', 'de', 'es', 'fr', 'nl', 'no', 'ru', 'zh_CN']
+        },
+        umami: {
+            enabled: true,
+            url: '',
+            id: ''
         }
     }
 
-    const { pathname, searchParams } = new URL(request.url);
+    const umami = class Umami {
+        static async request(url) {
+            await fetch(config.umami.url + '/api/collect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'User-Agent': request.headers.get('User-Agent')
+                },
+                body: JSON.stringify({
+                    type: 'pageview',
+                    payload: {
+                        website: config.umami.id,
+                        url: url,
+                        language: '',
+                        screen: ''
+                    }
+                })
+            });
+        }
+
+        static async error(url, error) {
+            await fetch(config.umami.url + '/api/collect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'User-Agent': request.headers.get('User-Agent')
+                },
+                body: JSON.stringify({
+                    type: 'event',
+                    payload: {
+                        website: config.umami.id,
+                        url: url,
+                        event_type: 'error',
+                        event_value: error
+                    }
+                })
+            });
+        }
+    }
+
+    const {
+        pathname,
+        searchParams
+    } = new URL(request.url);
 
     if (pathname.startsWith('/images')) {
         let resolution = '&w=1920'; // hd
@@ -48,6 +96,10 @@ const handleRequest = async (request) => {
 
         // unsplash
         if (pathname.startsWith('/images/unsplash')) {
+            if (config.umami.enabled === true) {
+                await umami.request('/images/unsplash');
+            }
+
             const data = await (await fetch(`https://api.unsplash.com/photos/random?client_id=${config.unsplash.client_id}&collections=${config.unsplash.collection}`)).json();
             await fetch(`${data.links.download_location}&client_id=${config.unsplash.client_id}`); // api requirement
 
@@ -78,6 +130,10 @@ const handleRequest = async (request) => {
 
         // pexels
         if (pathname.startsWith('/images/pexels')) {
+            if (config.umami.enabled === true) {
+                await umami.request('/images/pexels');
+            }
+
             let data = await (await fetch(`https://api.pexels.com/v1/collections/${config.pexels.collection}?per_page=80&page=${Math.floor(Math.random() * 2) + 1}`, {
                 headers: {
                     'Authorization': config.pexels.token
@@ -122,6 +178,10 @@ const handleRequest = async (request) => {
         }
 
         if (!config.openweathermap.supported_languages.includes(language)) {
+            if (config.umami.enabled === true) {
+                await umami.error('/weather', 'language-not-supported');
+            }
+
             return new Response(JSON.stringify({
                 'cod': '400',
                 'message': 'language not supported'
@@ -139,8 +199,13 @@ const handleRequest = async (request) => {
             const lat = searchParams.get('lat');
             const lon = searchParams.get('lon');
 
+            if (config.umami.enabled === true) {
+                await umami.request('/weather/autolocation');
+            }
+
             if (lat && lon) {
                 const data = await (await fetch(`http://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${config.openweathermap.app_id}&lang=${language}`)).json();
+
                 return new Response(JSON.stringify(data), {
                     status: 200,
                     headers: {
@@ -149,6 +214,10 @@ const handleRequest = async (request) => {
                     }
                 });
             } else {
+                if (config.umami.enabled === true) {
+                    await umami.error('/weather', 'autolocation-not-provided');
+                }
+
                 return new Response(JSON.stringify({
                     'cod': '400',
                     'message': 'missing lat or lon'
@@ -163,8 +232,16 @@ const handleRequest = async (request) => {
         }
 
         // weather
+        if (config.umami.enabled === true) {
+            await umami.request('/weather');
+        }
+
         const city = searchParams.get('city');
         if (city === null) {
+            if (config.umami.enabled === true) {
+                await umami.error('/weather', 'city-not-provided');
+            }
+
             return new Response(JSON.stringify({
                 'cod': '400',
                 'message': 'no city provided'
@@ -179,6 +256,10 @@ const handleRequest = async (request) => {
 
         const data = await (await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${config.openweathermap.app_id}&lang=${language}`)).json();
         if (data.cod === '404') {
+            if (config.umami.enabled === true) {
+                await umami.error('/weather', 'data-not-found');
+            }
+
             return new Response(JSON.stringify(data), {
                 status: 404,
                 headers: {
@@ -216,6 +297,10 @@ const handleRequest = async (request) => {
                 'Access-Control-Allow-Origin': '*'
             }
         });
+    }
+
+    if (config.umami.enabled === true) {
+        await umami.request('/');
     }
 
     return new Response(JSON.stringify({
