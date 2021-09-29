@@ -28,6 +28,9 @@ const handleRequest = async (request) => {
             enabled: true,
             url: '',
             id: ''
+        },
+        mapbox: {
+            token: ''
         }
     }
 
@@ -112,14 +115,28 @@ const handleRequest = async (request) => {
                 location = data.location.city;
             }
 
-            return new Response(JSON.stringify({
+            const object = {
                 file: data.urls.full + resolution,
                 photographer: data.user.name,
                 location: location,
                 photo_page: data.links.html,
                 photographer_page: data.user.links.html + config.unsplash.referral, // also api requirement
-                camera: data.exif.model,
-            }), {
+                camera: data.exif.model
+            }
+
+            const map = searchParams.get('map');
+            if (map === 'true') {
+               if (data.location.position.latitude) {
+                   object.latitude = data.location.position.latitude;
+               }
+               if (data.location.position.longitude) {
+                   object.longitude = data.location.position.longitude;
+               }
+            
+               object.maptoken = config.mapbox.token;
+            }
+
+            return new Response(JSON.stringify(object), {
                 status: 200,
                 headers: {
                     'content-type': 'application/json;charset=UTF-8',
@@ -204,7 +221,7 @@ const handleRequest = async (request) => {
             }
 
             if (lat && lon) {
-                const data = await (await fetch(`http://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${config.openweathermap.app_id}&lang=${language}`)).json();
+                const data = await (await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${config.openweathermap.app_id}&lang=${language}`)).json();
 
                 return new Response(JSON.stringify(data), {
                     status: 200,
@@ -289,7 +306,8 @@ const handleRequest = async (request) => {
             },
             clouds: {
                 all: data.clouds.all
-            }
+            },
+            id: data.id
         }), {
             status: 200,
             headers: {
