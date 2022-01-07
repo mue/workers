@@ -140,7 +140,9 @@ const handleRequest = async (request) => {
         location: location,
         photo_page: data.links.html,
         photographer_page: data.user.links.html + config.unsplash.referral, // also api requirement
-        camera: data.exif.model
+        camera: data.exif.model,
+        views: data.views,
+        downloads: data.downloads
       }
 
       const map = searchParams.get('map');
@@ -178,7 +180,7 @@ const handleRequest = async (request) => {
       data = data.media[Math.floor(Math.random() * data.media.length) + 1];
 
       return new Response(JSON.stringify({
-        file: data.src.original + resolution,
+        file: data.src.original + resolution.replace('&', '?'),
         location: '',
         photographer: data.photographer,
         photographer_page: data.photographer_url,
@@ -315,6 +317,7 @@ const handleRequest = async (request) => {
         temp: data.main.temp,
         temp_min: data.main.temp_min,
         temp_max: data.main.temp_max,
+        temp_feels_like: data.main.feels_like,
         pressure: data.main.pressure,
         humidity: data.main.humidity
       },
