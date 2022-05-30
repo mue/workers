@@ -1,0 +1,8 @@
+name = "mueproxy"
+type = "webpack"
+main = "./src/proxy.js"
+route = "proxy.muetab.com/*"
+usage_model = "bundled"
+compatibility_flags = []
+workers_dev = true
+compatibility_date = "2022-05-09"
