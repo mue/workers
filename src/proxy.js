@@ -10,28 +10,9 @@ addEventListener('fetch', (event) => {
 
 const handleRequest = async (request) => {
   const config = {
-    unsplash: {
-      client_id: UNSPLASH_TOKEN,
-      collection: UNSPLASH_COLLECTION,
-      referral: `?utm_source=${UNSPLASH_REFERRAL}&utm_medium=referral`
-    },
-    pexels: {
-      token: PEXELS_TOKEN,
-      collection: PEXELS_COLLECTION
-    },
-    openweathermap: {
-      app_id: OPENWEATHERMAP_TOKEN,
-      // see https://openweathermap.org/current#multi, this list should include Mue languages that are included in the list
-      supported_languages: ['en', 'de', 'es', 'fr', 'nl', 'no', 'ru', 'zh_CN']
-    },
-    umami: {
-      enabled: true,
-      url: UMAMI_URL,
-      id: UMAMI_ID
-    },
-    mapbox: {
-      token: MAPBOX_TOKEN
-    },
+    // see https://openweathermap.org/current#multi, this list should include Mue languages that are included in the list
+    openweathermap_languages: ['en', 'de', 'es', 'fr', 'nl', 'no', 'ru', 'zh_CN'],
+    umami_enabled: true,
     chrome_extension: 'chrome-extension://bngmbednanpcfochchhgbkookpiaiaid',
     edge_extension: 'chrome-extension://aepnglgjfokepefimhbnibfjekidhmja',
     whale_extension: 'chrome-extension://ecllekeilcmicbfkkiknfdddbogibbnc'
@@ -53,7 +34,7 @@ const handleRequest = async (request) => {
     }
 
     static async request(url) {
-      await fetch(config.umami.url + '/api/collect', {
+      await fetch(UMAMI_URL + '/api/collect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -62,7 +43,7 @@ const handleRequest = async (request) => {
         body: JSON.stringify({
           type: 'pageview',
           payload: {
-            website: config.umami.id,
+            website: UMAMI_ID,
             url: url,
             language: '',
             screen: '',
@@ -73,7 +54,7 @@ const handleRequest = async (request) => {
     }
 
     static async error(url, error) {
-      await fetch(config.umami.url + '/api/collect', {
+      await fetch(UMAMI_URL + '/api/collect', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,7 +63,7 @@ const handleRequest = async (request) => {
         body: JSON.stringify({
           type: 'event',
           payload: {
-            website: config.umami.id,
+            website: UMAMI_ID,
             url: url,
             event_type: 'error',
             event_value: error,
@@ -118,12 +99,12 @@ const handleRequest = async (request) => {
 
     // unsplash
     if (pathname.startsWith('/images/unsplash')) {
-      if (config.umami.enabled === true) {
+      if (config.umami_enabled === true) {
         await umami.request('/images/unsplash');
       }
 
-      const data = await (await fetch(`https://api.unsplash.com/photos/random?client_id=${config.unsplash.client_id}&collections=${config.unsplash.collection}`)).json();
-      await fetch(`${data.links.download_location}&client_id=${config.unsplash.client_id}`); // api requirement
+      const data = await (await fetch(`https://api.unsplash.com/photos/random?client_id=${UNSPLASH_TOKEN}&collections=${UNSPLASH_COLLECTION}`)).json();
+      await fetch(`${data.links.download_location}&client_id=${UNSPLASH_TOKEN}`); // api requirement
 
       let location = '';
       if (data.location.country && data.location.city) {
@@ -139,7 +120,7 @@ const handleRequest = async (request) => {
         photographer: data.user.name,
         location: location,
         photo_page: data.links.html,
-        photographer_page: data.user.links.html + config.unsplash.referral, // also api requirement
+        photographer_page: data.user.links.html + `?utm_source=${UNSPLASH_REFERRAL}&utm_medium=referral`, // also api requirement
         camera: data.exif.model,
         views: data.views,
         downloads: data.downloads
@@ -154,7 +135,7 @@ const handleRequest = async (request) => {
           object.longitude = data.location.position.longitude;
         }
 
-        object.maptoken = config.mapbox.token;
+        object.maptoken = MAPBOX_TOKEN;
       }
 
       return new Response(JSON.stringify(object), {
@@ -168,13 +149,13 @@ const handleRequest = async (request) => {
 
     // pexels
     if (pathname.startsWith('/images/pexels')) {
-      if (config.umami.enabled === true) {
+      if (config.umami_enabled === true) {
         await umami.request('/images/pexels');
       }
 
-      let data = await (await fetch(`https://api.pexels.com/v1/collections/${config.pexels.collection}?per_page=80&page=${Math.floor(Math.random() * 2) + 1}`, {
+      let data = await (await fetch(`https://api.pexels.com/v1/collections/${PEXELS_COLLECTION}?per_page=80&page=${Math.floor(Math.random() * 2) + 1}`, {
         headers: {
-          'Authorization': config.pexels.token
+          Authorization: PEXELS_TOKEN
         }
       })).json();
       data = data.media[Math.floor(Math.random() * data.media.length) + 1];
@@ -215,14 +196,14 @@ const handleRequest = async (request) => {
         break;
     }
 
-    if (!config.openweathermap.supported_languages.includes(language)) {
-      if (config.umami.enabled === true) {
+    if (!config.openweathermap_languages.includes(language)) {
+      if (config.umami_enabled === true) {
         await umami.error('/weather', 'language-not-supported');
       }
 
       return new Response(JSON.stringify({
-        'cod': '400',
-        'message': 'language not supported'
+        cod: '400',
+        message: 'language not supported'
       }), {
         status: 400,
         headers: {
@@ -237,12 +218,12 @@ const handleRequest = async (request) => {
       const lat = searchParams.get('lat');
       const lon = searchParams.get('lon');
 
-      if (config.umami.enabled === true) {
+      if (config.umami_enabled === true) {
         await umami.request('/weather/autolocation');
       }
 
       if (lat && lon) {
-        const data = await (await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${config.openweathermap.app_id}&lang=${language}`)).json();
+        const data = await (await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${OPENWEATHERMAP_TOKEN}&lang=${language}`)).json();
 
         return new Response(JSON.stringify(data), {
           status: 200,
@@ -252,13 +233,13 @@ const handleRequest = async (request) => {
           }
         });
       } else {
-        if (config.umami.enabled === true) {
+        if (config.umami_enabled === true) {
           await umami.error('/weather', 'autolocation-not-provided');
         }
 
         return new Response(JSON.stringify({
-          'cod': '400',
-          'message': 'missing lat or lon'
+          cod: '400',
+          message: 'missing lat or lon'
         }), {
           status: 400,
           headers: {
@@ -270,19 +251,19 @@ const handleRequest = async (request) => {
     }
 
     // weather
-    if (config.umami.enabled === true) {
+    if (config.umami_enabled === true) {
       await umami.request('/weather');
     }
 
     const city = searchParams.get('city');
     if (city === null) {
-      if (config.umami.enabled === true) {
+      if (config.umami_enabled === true) {
         await umami.error('/weather', 'city-not-provided');
       }
 
       return new Response(JSON.stringify({
-        'cod': '400',
-        'message': 'no city provided'
+        cod: '400',
+        message: 'no city provided'
       }), {
         status: 400,
         headers: {
@@ -292,9 +273,9 @@ const handleRequest = async (request) => {
       });
     }
 
-    const data = await (await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${config.openweathermap.app_id}&lang=${language}`)).json();
+    const data = await (await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${OPENWEATHERMAP_TOKEN}&lang=${language}`)).json();
     if (data.cod === '404') {
-      if (config.umami.enabled === true) {
+      if (config.umami_enabled === true) {
         await umami.error('/weather', 'data-not-found');
       }
 
@@ -339,7 +320,7 @@ const handleRequest = async (request) => {
     });
   }
 
-  if (config.umami.enabled === true) {
+  if (config.umami_enabled === true) {
     await umami.request('/');
   }
 
