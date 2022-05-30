@@ -1,7 +1,7 @@
 # workers
-Mirror of the Mue Cloudflare Workers scripts
+Mue Cloudflare Workers scripts
 
-This repository will be manually updated whenever a worker is modified. Files have been modified only to remove the tokens.
+Currently the only script is a proxy to APIs such as OpenWeatherMap and Unsplash to prevent leakage of API tokens.
 
 ## Notice
 This was made specifically for Mue, if you wish to use the routes please host your own copy, all of the APIs and services used in the workers have free tiers that will work for most projects.
