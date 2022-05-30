@@ -1,5 +1,4 @@
 name = "mueproxy"
-type = "webpack"
 main = "./src/proxy.js"
 route = "proxy.muetab.com/*"
 usage_model = "bundled"
