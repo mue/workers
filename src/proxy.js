@@ -11,7 +11,7 @@ addEventListener('fetch', (event) => {
 const handleRequest = async (request) => {
   const config = {
     // see https://openweathermap.org/current#multi, this list should include Mue languages that are included in the list
-    openweathermap_languages: ['en', 'de', 'es', 'fr', 'nl', 'no', 'ru', 'zh_cn'],
+    openweathermap_languages: ['en', 'de', 'es', 'fr', 'nl', 'no', 'ru', 'zh_cn', 'id', 'tr'],
     umami_enabled: true,
     chrome_extension: 'chrome-extension://bngmbednanpcfochchhgbkookpiaiaid',
     edge_extension: 'chrome-extension://aepnglgjfokepefimhbnibfjekidhmja',
