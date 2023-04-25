@@ -34,43 +34,45 @@ const handleRequest = async (request) => {
     }
 
     static async request(url) {
-      await fetch(UMAMI_URL + '/api/collect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': request.headers.get('User-Agent')
-        },
-        body: JSON.stringify({
-          type: 'pageview',
-          payload: {
-            website: UMAMI_ID,
-            url: url,
-            language: '',
-            screen: '',
-            referrer: this.getReferrer()
-          }
-        })
-      });
+      console.warn('umami is disabled');
+      // await fetch(UMAMI_URL + '/api/collect', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'User-Agent': request.headers.get('User-Agent')
+      //   },
+      //   body: JSON.stringify({
+      //     type: 'pageview',
+      //     payload: {
+      //       website: UMAMI_ID,
+      //       url: url,
+      //       language: '',
+      //       screen: '',
+      //       referrer: this.getReferrer()
+      //     }
+      //   })
+      // });
     }
 
     static async error(url, error) {
-      await fetch(UMAMI_URL + '/api/collect', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': request.headers.get('User-Agent')
-        },
-        body: JSON.stringify({
-          type: 'event',
-          payload: {
-            website: UMAMI_ID,
-            url: url,
-            event_type: 'error',
-            event_value: error,
-            referrer: this.getReferrer()
-          }
-        })
-      });
+      console.error('error', url, error);
+      // await fetch(UMAMI_URL + '/api/collect', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'User-Agent': request.headers.get('User-Agent')
+      //   },
+      //   body: JSON.stringify({
+      //     type: 'event',
+      //     payload: {
+      //       website: UMAMI_ID,
+      //       url: url,
+      //       event_type: 'error',
+      //       event_value: error,
+      //       referrer: this.getReferrer()
+      //     }
+      //   })
+      // });
     }
   }
 
